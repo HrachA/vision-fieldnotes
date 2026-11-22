@@ -115,5 +115,7 @@ footer { border-top:1px solid var(--rule) }
 .controls .input-mode label { display:inline-flex; align-items:center; gap:4px; margin:0; cursor:pointer }
 .input-mode input { margin:0; accent-color:#46733f }
 #drawing-pad { display:block; width:min(100%,224px); height:auto; aspect-ratio:1; background:#20241e; border-radius:6px; margin:10px 0; cursor:crosshair; touch-action:none }
-#drawing-input { margin-bottom:16px }
+#drawing-input { display:none; margin-bottom:16px }
+#controls:has(#draw-mode:checked) #drawing-input { display:block }
+#controls:has(#draw-mode:checked) #sample-input { display:none }
 #clear-drawing:disabled { opacity:.55; cursor:default }

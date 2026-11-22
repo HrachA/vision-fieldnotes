@@ -2,6 +2,7 @@
 const field = id => document.getElementById(id);
 let reference, queries;
 let handwriting = null;
+let sampleStatus = "Loading handwriting samples…";
 
 function drawDigit(canvas, pixels, palette) {
   const ctx = canvas.getContext("2d");
@@ -18,13 +19,12 @@ function drawDigit(canvas, pixels, palette) {
 
 function updateLab() {
   const drawing = field("draw-mode").checked;
-  field("drawing-input").hidden = !drawing;
-  field("sample-input").hidden = drawing;
   field("clear-drawing").disabled = !handwriting;
-  if (drawing && !handwriting) {
-    drawDigit(field("digit"), new Uint8Array(784), [[32,36,30], [203,244,152]]);
+  if (!reference || (drawing && !handwriting)) {
+    const preview = drawing && handwriting ? KNN.transform(handwriting, field("variant").value) : new Uint8Array(784);
+    drawDigit(field("digit"), preview, [[32,36,30], [203,244,152]]);
     field("prediction").textContent = "—";
-    field("summary").textContent = "Draw a digit to see the vote.";
+    field("summary").textContent = reference ? "Draw a digit to see the vote." : sampleStatus;
     field("neighbors").replaceChildren();
     return;
   }
@@ -61,31 +61,31 @@ async function loadImages(name, size) {
 }
 
 async function startLab() {
-  const controls = [...field("controls").elements];
-  controls.forEach(control => control.disabled = true);
+  const initial = "21";
+  const clearDrawing = enableDrawing(field("drawing-pad"), pixels => {
+    handwriting = pixels;
+    updateLab();
+  });
+  field("clear-drawing").onclick = clearDrawing;
+  field("controls").onchange = updateLab;
+  field("reset").onclick = () => {
+    field("controls").reset();
+    field("query").value = initial;
+    clearDrawing();
+  };
+  field("query").disabled = true;
+  updateLab();
   try {
     [reference, queries] = await Promise.all([loadImages("reference", 1000), loadImages("queries", 30)]);
     for (let i = 0; i < 30; i++) {
       const label = queries[i * KNN.recordSize];
       field("query").add(new Option("Digit " + label + " · sample " + (i % 3 + 1), i));
     }
-    const initial = "21";
     field("query").value = initial;
-    const clearDrawing = enableDrawing(field("drawing-pad"), pixels => {
-      handwriting = pixels;
-      updateLab();
-    });
-    field("clear-drawing").onclick = clearDrawing;
-    field("controls").onchange = updateLab;
-    field("reset").onclick = () => {
-      field("controls").reset();
-      field("query").value = initial;
-      clearDrawing();
-    };
-    controls.forEach(control => control.disabled = false);
-    updateLab();
+    field("query").disabled = false;
   } catch {
-    field("summary").textContent = "The samples could not load. Refresh the page to retry.";
+    sampleStatus = "The reference samples could not load. Refresh the page to retry classification.";
   }
+  updateLab();
 }
 startLab();
