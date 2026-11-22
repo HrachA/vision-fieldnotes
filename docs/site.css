@@ -110,3 +110,10 @@ footer { border-top:1px solid var(--rule) }
 .key-b { color:#7954a3 }
 #boundary-map { display:block; width:min(100%,500px); height:auto; margin-inline:auto; cursor:crosshair }
 #boundary-readout { margin:4px 0 8px; font-weight:600; font-variant-numeric:tabular-nums }
+.input-mode { display:flex; flex-wrap:wrap; gap:6px 14px; padding:0; border:0; margin:0 0 16px }
+.input-mode legend { margin-bottom:6px; font-size:.86rem; font-weight:600 }
+.controls .input-mode label { display:inline-flex; align-items:center; gap:4px; margin:0; cursor:pointer }
+.input-mode input { margin:0; accent-color:#46733f }
+#drawing-pad { display:block; width:min(100%,224px); height:auto; aspect-ratio:1; background:#20241e; border-radius:6px; margin:10px 0; cursor:crosshair; touch-action:none }
+#drawing-input { margin-bottom:16px }
+#clear-drawing:disabled { opacity:.55; cursor:default }

@@ -1,6 +1,7 @@
 "use strict";
 const field = id => document.getElementById(id);
 let reference, queries;
+let handwriting = null;
 
 function drawDigit(canvas, pixels, palette) {
   const ctx = canvas.getContext("2d");
@@ -16,13 +17,26 @@ function drawDigit(canvas, pixels, palette) {
 }
 
 function updateLab() {
+  const drawing = field("draw-mode").checked;
+  field("drawing-input").hidden = !drawing;
+  field("sample-input").hidden = drawing;
+  field("clear-drawing").disabled = !handwriting;
+  if (drawing && !handwriting) {
+    drawDigit(field("digit"), new Uint8Array(784), [[32,36,30], [203,244,152]]);
+    field("prediction").textContent = "—";
+    field("summary").textContent = "Draw a digit to see the vote.";
+    field("neighbors").replaceChildren();
+    return;
+  }
   const offset = Number(field("query").value) * KNN.recordSize;
-  const pixels = KNN.transform(queries.subarray(offset + 1, offset + KNN.recordSize), field("variant").value);
+  const input = drawing ? handwriting : queries.subarray(offset + 1, offset + KNN.recordSize);
+  const pixels = KNN.transform(input, field("variant").value);
   const k = Number(field("k").value);
   const result = KNN.classify(reference, pixels, k, field("metric").value);
   drawDigit(field("digit"), pixels, [[32,36,30], [203,244,152]]);
   field("prediction").textContent = result.label;
-  field("summary").textContent = "True label " + queries[offset] + " · " + result.count + " of " + k + " votes";
+  const description = drawing ? "Your drawing" : "True label " + queries[offset];
+  field("summary").textContent = description + " · " + result.count + " of " + k + " votes";
   const tiles = result.neighbors.map(({offset, label, distance}, i) => {
     const tile = document.createElement("div");
     tile.className = "neighbor";
@@ -57,14 +71,19 @@ async function startLab() {
     }
     const initial = "21";
     field("query").value = initial;
+    const clearDrawing = enableDrawing(field("drawing-pad"), pixels => {
+      handwriting = pixels;
+      updateLab();
+    });
+    field("clear-drawing").onclick = clearDrawing;
     field("controls").onchange = updateLab;
     field("reset").onclick = () => {
       field("controls").reset();
       field("query").value = initial;
-      updateLab();
+      clearDrawing();
     };
-    updateLab();
     controls.forEach(control => control.disabled = false);
+    updateLab();
   } catch {
     field("summary").textContent = "The samples could not load. Refresh the page to retry.";
   }
